@@ -19,10 +19,10 @@ describe('RestaurantController createRestaurant tesztek', ()=>{
     it('megkellene hívni a Model create fgv-ét', ()=>{
         req.body = newRestaurant
         RestaurantController.createRestaurant(req, res, next)
-        expect(restaurantModel.create).toHaveBeenCalled()
+        expect(restaurantModel.create).toHaveBeCalledWith(newRestaurant)
     })
-    it('201 koddal kellene visszatérnie', ()=>{
-        req.body = newRestaurant
+    it('A create fuggveny jo status kodot ad vissza', ()=>{
+        restaurantModel.create.mockReturnValue(newRestaurant)
         RestaurantController.createRestaurant(req, res, next)
         expect(res.statusCode).toBe(201)
         expect(res._isEndCalled()).toBeTruthy()
