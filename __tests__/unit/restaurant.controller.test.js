@@ -1,7 +1,9 @@
 const RestaurantController = require('../../controllers/restaurant.controller')
 const restaurantModel = require('../../models/etteremModel')
 const httpMocks = require("node-mocks-http")
-const newRestaurant = require('../mock-data/new-restaurant.json')
+const newRestaurant = require('../mock-data/new-rest.json')
+const allRestaurants = require('../mock-data/all-rest.json')
+const foundRestaurant = require('../mock-data/found-rest.json')
 
 restaurantModel.create = jest.fn()
 
@@ -109,4 +111,15 @@ describe("RestaurantController.deleteRestaurant", () => {
   
       expect(RestaurantModel.findByIdAndDelete).toHaveBeenCalledWith(restaurantId);
     });
+});
+
+describe("Handle all errors",  () => {
+  it('should handle errors', async () => {
+    const errorMessage = { message: 'Error deleting restaurant' };
+    const rejectedPromise = Promise.reject(errorMessage);
+    Model.findByIdAndDelete.mockReturnValue(rejectedPromise);
+    await restaurantController.deleteResturantsById(req, res, next);
+    expect(res.statusCode).toBe(500);
+    expect(res._getJSONData()).toStrictEqual(errorMessage);
+  });
 });
