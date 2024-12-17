@@ -15,78 +15,100 @@ beforeEach(() => {
   next = jest.fn();
 });
 
-describe("RestaurantController.createRestaurant", () => {
+describe('RestaurantController createRestaurant tests', () => {
   beforeEach(() => {
     req.body = newRestaurant;
   });
-  it("should have a createRestaurant function", () => {
-    expect(typeof RestaurantController.createRestaurant).toBe("function");
+
+  it('should have a createRestaurant function', () => {
+    expect(typeof RestaurantController.createRestaurant).toBe('function');
   });
-  it("should call reastaurantModel.create", () => {
-    RestaurantController.createRestaurant(req, res, next);
-    expect(RestaurantModel.create).toHaveBeenCalledWith(newRestaurant);
+
+  it('should call restaurantModel.create', async () => {
+    await RestaurantController.createRestaurant(req, res, next);
+    expect(restaurantModel.create).toHaveBeenCalledWith(newRestaurant);
   });
-  it("should return 201 response code", () => {
-    RestaurantController.createRestaurant(req, res, next);
+
+  it('should return 201 status code and the created restaurant', async () => {
+    restaurantModel.create.mockResolvedValue(newRestaurant);
+    await RestaurantController.createRestaurant(req, res, next);
     expect(res.statusCode).toBe(201);
-  });
-  it("should return json body in response", () => {
-    RestaurantModel.create.mockReturnValue(newRestaurant);
-    RestaurantController.createRestaurant(req, res, next);
     expect(res._getJSONData()).toStrictEqual(newRestaurant);
+  });
+
+  it('should handle errors', async () => {
+    const errorMessage = 'Error creating restaurant';
+    restaurantModel.create.mockRejectedValue(new Error(errorMessage));
+    await RestaurantController.createRestaurant(req, res, next);
+
+    expect(res.statusCode).toBe(500);
+    expect(res._getJSONData()).toStrictEqual({ message: errorMessage });
   });
 });
 
-describe("RestaurantController.getAllRestaurants", () => {
-  it("should have a getAllRestaurants function", () => {
-    expect(typeof RestaurantController.getRestaurantById).toBe("function");
+describe('RestaurantController getAllRestaurant tests', () => {
+  beforeEach(() => {
+    restaurantModel.find = jest.fn();
   });
-  it("should call restaurantModel.find", () => {
-    RestaurantController.getAllRestaurants(req, res, next);
-    expect(RestaurantModel.find).toHaveBeenCalled();
+
+  it('should have a getAllRestaurant function', () => {
+    expect(typeof RestaurantController.getAllRestaurant).toBe('function');
   });
-  it("should return 200 response code and json body in response", async () => {
-    const allRestaurants = [restaurant];
-    RestaurantModel.find.mockResolvedValue(allRestaurants);
 
-    await RestaurantController.getAllRestaurants(req, res, next);
+  it('should call restaurantModel.find', async () => {
+    await RestaurantController.getAllRestaurant(req, res, next);
+    expect(restaurantModel.find).toHaveBeenCalled();
+  });
 
+  it('should return 200 status code and all restaurants', async () => {
+    const allRestaurants = [newRestaurant];
+    restaurantModel.find.mockResolvedValue(allRestaurants);
+    await RestaurantController.getAllRestaurant(req, res, next);
     expect(res.statusCode).toBe(200);
     expect(res._getJSONData()).toStrictEqual(allRestaurants);
   });
-  it("should call next with an error if RestaurantModel.find throws", async () => {
-    const errorMessage = { message: "Database error" };
-    RestaurantModel.find.mockRejectedValue(errorMessage);
 
-    await RestaurantController.getAllRestaurants(req, res, next);
+  it('should handle errors', async () => {
+    const errorMessage = 'Error fetching restaurants';
+    restaurantModel.find.mockRejectedValue(new Error(errorMessage));
+    await RestaurantController.getAllRestaurant(req, res, next);
 
-    expect(next).toHaveBeenCalledWith(errorMessage);
+    expect(res.statusCode).toBe(500);
+    expect(res._getJSONData()).toStrictEqual({ message: errorMessage });
   });
 });
 
-describe("RestaurantController.getRestaurantById", () => {
-  it("should have a getRestaurantById function", () => {
-    expect(typeof RestaurantController.getRestaurantById).toBe("function");
+describe('RestaurantController getRestaurantById tests', () => {
+  beforeEach(() => {
+    restaurantModel.findById = jest.fn();
+    req.params.id = '1';
   });
 
-  it("should call RestaurantModel.findById", async () => {
-    RestaurantModel.findById = jest.fn().mockResolvedValue(restaurant); // Mock findById
-    req.params.id = restaurantId;
-
-    await RestaurantController.getRestaurantById(req, res, next);
-
-    expect(RestaurantModel.findById).toHaveBeenCalledWith(restaurantId);
+  it('should have a getRestaurantById function', () => {
+    expect(typeof RestaurantController.getRestaurantById).toBe('function');
   });
 
-  it("should return json body and 200 response code", async () => {
-    RestaurantModel.findById = jest.fn().mockResolvedValue(restaurant);
-    req.params.id = restaurantId;
-
+  it('should call restaurantModel.findById with route parameters', async () => {
     await RestaurantController.getRestaurantById(req, res, next);
+    expect(restaurantModel.findById).toHaveBeenCalledWith('1');
+  });
 
+  it('should return 200 status code and the restaurant', async () => {
+    restaurantModel.findById.mockResolvedValue(newRestaurant);
+    await RestaurantController.getRestaurantById(req, res, next);
     expect(res.statusCode).toBe(200);
-    expect(res._getJSONData()).toStrictEqual(restaurant);
+    expect(res._getJSONData()).toStrictEqual(newRestaurant);
   });
+
+  it('should handle errors', async () => {
+    const errorMessage = 'Error fetching restaurant';
+    restaurantModel.findById.mockRejectedValue(new Error(errorMessage));
+    await RestaurantController.getRestaurantById(req, res, next);
+
+    expect(res.statusCode).toBe(500);
+    expect(res._getJSONData()).toStrictEqual({ message: errorMessage });
+  });
+
 
   it("should handle errors in getRestaurantById", async () => {
     const errorMessage = { message: "Error finding restaurant" };
@@ -99,27 +121,25 @@ describe("RestaurantController.getRestaurantById", () => {
   });
 });
 
-describe("RestaurantController.deleteRestaurant", () => {
-    it("should have a deleteRestaurant function", () => {
-      expect(typeof RestaurantController.deleteRestaurant).toBe("function");
-    });
-    it("should call RestaurantModel.findByIdAndDelete", async () => {
-      RestaurantModel.findByIdAndDelete = jest.fn().mockResolvedValue(restaurant);
-      req.params.id = restaurantId;
-  
-      await RestaurantController.deleteRestaurant(req, res, next);
-  
-      expect(RestaurantModel.findByIdAndDelete).toHaveBeenCalledWith(restaurantId);
-    });
-});
+describe('RestaurantController deleteRestaurant tests', () => {
+  beforeEach(() => {
+    restaurantModel.findByIdAndDelete = jest.fn();
+    req.params.id = '1';
+  });
 
-describe("Handle all errors",  () => {
-  it('should handle errors', async () => {
-    const errorMessage = { message: 'Error deleting restaurant' };
-    const rejectedPromise = Promise.reject(errorMessage);
-    Model.findByIdAndDelete.mockReturnValue(rejectedPromise);
-    await restaurantController.deleteResturantsById(req, res, next);
-    expect(res.statusCode).toBe(500);
-    expect(res._getJSONData()).toStrictEqual(errorMessage);
+  it('should have a deleteRestaurant function', () => {
+    expect(typeof RestaurantController.deleteRestaurant).toBe('function');
+  });
+
+  it('should call restaurantModel.findByIdAndDelete with route parameters', async () => {
+    await RestaurantController.deleteRestaurant(req, res, next);
+    expect(restaurantModel.findByIdAndDelete).toHaveBeenCalledWith('1');
+  });
+
+  it('should return 200 status code and the deleted restaurant', async () => {
+    restaurantModel.findByIdAndDelete.mockResolvedValue(newRestaurant);
+    await RestaurantController.deleteRestaurant(req, res, next);
+    expect(res.statusCode).toBe(200);
+    expect(res._getJSONData()).toStrictEqual(newRestaurant);
   });
 });
